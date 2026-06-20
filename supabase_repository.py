@@ -1,7 +1,4 @@
-"""
-Repositório de contatos no Supabase.
-Responsável por buscar as pessoas cadastradas na tabela configurada.
-"""
+"""Busca os contatos cadastrados na tabela do Supabase."""
 import logging
 from dataclasses import dataclass
 
@@ -18,18 +15,14 @@ class Contato:
 
 
 class ContatoRepository:
-    """Encapsula o acesso à tabela de contatos no Supabase."""
+    """Acesso à tabela de contatos no Supabase."""
 
     def __init__(self, url: str, key: str, table: str):
         self._table = table
         self._client: Client = create_client(url, key)
 
     def listar_contatos(self, limite: int) -> list[Contato]:
-        """
-        Busca até `limite` contatos cadastrados, ordenados por id.
-
-        Espera uma tabela com (no mínimo) as colunas: id, nome, telefone.
-        """
+        """Busca até `limite` contatos, ordenados por id. Ignora linhas sem nome/telefone."""
         logger.info("Buscando até %d contato(s) na tabela '%s'...", limite, self._table)
 
         response = (

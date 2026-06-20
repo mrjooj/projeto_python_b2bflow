@@ -1,10 +1,10 @@
 # Z-API + Supabase Sender
 
-Script em Python que lê contatos cadastrados no **Supabase** e envia, via **Z-API**, a mensagem:
+Lê contatos cadastrados no Supabase e envia, via Z-API, a mensagem:
 
 > Olá, `<nome_contato>` tudo bem com você?
 
-Envia para até **3 contatos** (ou menos, se a tabela tiver menos registros), personalizando o nome de cada um.
+Envia para até 3 contatos (ou menos, se a tabela tiver menos registros), com o nome de cada um já personalizado.
 
 ## Stack
 
@@ -20,7 +20,7 @@ Envia para até **3 contatos** (ou menos, se a tabela tiver menos registros), pe
 ├── config.py                # carrega e valida variáveis de ambiente
 ├── supabase_repository.py   # busca os contatos no Supabase
 ├── zapi_client.py           # envia mensagens via Z-API
-├── schema.sql                # script para criar a tabela de exemplo
+├── schema.sql               # script para criar a tabela de exemplo
 ├── requirements.txt
 ├── .env.example
 └── README.md
@@ -31,12 +31,14 @@ Envia para até **3 contatos** (ou menos, se a tabela tiver menos registros), pe
 1. Crie um projeto gratuito em [supabase.com](https://supabase.com).
 2. Abra **SQL Editor** e rode o conteúdo de [`schema.sql`](./schema.sql), que cria a tabela `contatos`:
 
-   | coluna     | tipo      | observação                          |
-   |------------|-----------|--------------------------------------|
-   | id         | bigint    | gerado automaticamente (PK)          |
-   | nome       | text      | usado para personalizar a mensagem   |
-   | telefone   | text      | formato `DDI DDD NÚMERO`, ex: `5511999999999` (apenas dígitos; o código também remove `+`, espaços, `-` e parênteses automaticamente) |
-   | created_at | timestamp | preenchido automaticamente           |
+   | coluna     | tipo      | observação                        |
+   |------------|-----------|------------------------------------|
+   | id         | bigint    | gerado automaticamente (PK)        |
+   | nome       | text      | usado para personalizar a mensagem |
+   | telefone   | text      | formato `DDI DDD NÚMERO`, ex: `5511999999999` |
+   | created_at | timestamp | preenchido automaticamente         |
+
+   O telefone pode ter `+`, espaços, `-` ou parênteses — o código remove tudo isso antes de enviar pra Z-API.
 
 3. Substitua os dados de exemplo pelos números reais que você quer notificar.
 4. Em **Project Settings > API**, copie a **Project URL** e a chave **anon public** (ou `service_role`, se preferir).
@@ -80,12 +82,12 @@ INTERVALO_MAX_SEGUNDOS=8
 
 ### Envio humanizado
 
-Para não disparar as 3 mensagens em menos de 1 segundo (padrão clássico de bot/spam), o script:
+Mandar as 3 mensagens em menos de 1 segundo é um padrão clássico de bot. Pra evitar isso:
 
-- Espera um intervalo **aleatório** entre `INTERVALO_MIN_SEGUNDOS` e `INTERVALO_MAX_SEGUNDOS` antes de enviar para o próximo contato.
-- Usa os parâmetros nativos da Z-API `delayTyping` (mostra "digitando..." no WhatsApp por `ZAPI_DELAY_TYPING` segundos antes da mensagem chegar) e `delayMessage` (espera `ZAPI_DELAY_MESSAGE` segundos antes de entregar).
+- O script espera um intervalo aleatório (entre `INTERVALO_MIN_SEGUNDOS` e `INTERVALO_MAX_SEGUNDOS`) antes de passar pro próximo contato.
+- `delayTyping` e `delayMessage` são parâmetros nativos da própria Z-API: o primeiro mostra "digitando..." no WhatsApp por alguns segundos antes da mensagem aparecer, o segundo atrasa a entrega.
 
-Ambos os pares de variáveis aceitam apenas valores de **1 a 15** (limite da própria Z-API) para os `ZAPI_DELAY_*`, e qualquer valor não-negativo para os `INTERVALO_*`.
+Os `ZAPI_DELAY_*` aceitam de 1 a 15 (limite da Z-API); os `INTERVALO_*` aceitam qualquer valor não-negativo.
 
 ## 4. Como rodar
 
@@ -119,13 +121,12 @@ python main.py
 
 ## Tratamento de erros
 
-- **Variável de ambiente faltando**: o script para antes de fazer qualquer chamada de rede e mostra qual variável falta (`ConfigError`).
-- **Registro do Supabase sem nome ou telefone**: é ignorado individualmente, com um log de `WARNING`, sem interromper o restante do fluxo.
-- **Falha ao enviar para um contato específico** (rede, telefone inválido, erro da Z-API): é registrada como `ERROR` para aquele contato, mas o script continua tentando enviar para os demais.
-- **Código de saída**: `0` se todos os envios deram certo (ou não havia contatos), `1` se houve algum erro de configuração, de leitura do Supabase, ou pelo menos uma falha de envio.
+Se faltar uma variável no `.env`, o script para antes de tentar conectar em qualquer coisa e diz qual variável está faltando.
+
+Registros do Supabase sem `nome` ou `telefone` são pulados (com um aviso no log), sem travar o resto. Da mesma forma, se o envio falhar pra um contato específico — telefone inválido, instância da Z-API desconectada, etc. — o erro fica registrado e o script segue tentando os próximos.
+
+O código de saída é `0` quando tudo correu bem (ou quando não havia contatos pra enviar) e `1` quando algo deu errado: configuração, leitura do Supabase, ou pelo menos uma falha de envio.
 
 ## Decisões de design
 
-- A leitura limita o número de registros direto na query (`limit`), evitando trazer a tabela inteira só para descartar o excedente em Python.
-- O cliente Z-API normaliza o telefone (remove `+`, espaços, `-`, `()`), já que a Z-API exige apenas dígitos.
-- A mensagem é montada em um único ponto (`montar_mensagem`), garantindo que o texto enviado seja sempre exatamente `"Olá, <nome_contato> tudo bem com você?"`.
+A query no Supabase já limita o número de linhas (`limit`) em vez de trazer a tabela inteira e cortar depois em Python. A mensagem é montada num único lugar (`montar_mensagem`), pra garantir que o texto enviado seja sempre exatamente o pedido. E o telefone é normalizado (tira `+`, espaços, `-`, parênteses) porque a Z-API só aceita dígitos.

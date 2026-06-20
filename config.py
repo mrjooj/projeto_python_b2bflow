@@ -1,7 +1,4 @@
-"""
-Módulo de configuração.
-Carrega e valida as variáveis de ambiente necessárias para a aplicação.
-"""
+"""Leitura e validação das variáveis de ambiente do projeto."""
 import os
 from dataclasses import dataclass
 
@@ -11,7 +8,7 @@ load_dotenv()
 
 
 class ConfigError(Exception):
-    """Erro de configuração de ambiente (variável ausente ou inválida)."""
+    """Variável de ambiente ausente ou com valor inválido."""
 
 
 def _get_required(key: str) -> str:
@@ -42,7 +39,7 @@ class Settings:
 
 
 def _get_int_in_range(key: str, default: int, minimo: int, maximo: int) -> int:
-    """Lê uma variável inteira opcional e garante que está dentro do range [minimo, maximo]."""
+    """Lê uma variável inteira opcional, validando o range aceito."""
     raw = os.getenv(key, str(default))
     try:
         valor = int(raw)
@@ -55,7 +52,7 @@ def _get_int_in_range(key: str, default: int, minimo: int, maximo: int) -> int:
 
 
 def load_settings() -> Settings:
-    """Lê e valida todas as variáveis de ambiente. Lança ConfigError se algo faltar."""
+    """Monta as configurações a partir do .env. Lança ConfigError se algo estiver errado."""
     max_contatos_raw = os.getenv("MAX_CONTATOS", "3")
     try:
         max_contatos = int(max_contatos_raw)

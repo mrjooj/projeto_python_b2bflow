@@ -1,14 +1,8 @@
 """
-main.py
+Lê os contatos do Supabase e envia, via Z-API, a mensagem:
+"Olá, <nome_contato> tudo bem com você?"
 
-Fluxo:
-1. Lê até MAX_CONTATOS pessoas cadastradas no Supabase.
-2. Para cada uma, envia via Z-API a mensagem:
-   "Olá, <nome_contato> tudo bem com você?"
-3. Registra logs de sucesso/erro para cada envio.
-
-Uso:
-    python main.py
+Uso: python main.py
 """
 import logging
 import random
@@ -38,13 +32,7 @@ def enviar_para_contatos(
     contatos: list[Contato],
     settings: Settings,
 ) -> tuple[int, int]:
-    """
-    Envia a mensagem para cada contato, com um intervalo aleatório entre os envios
-    (para não parecer um disparo em massa) e delays nativos da Z-API que simulam
-    alguém digitando antes de cada mensagem.
-
-    Retorna (sucessos, falhas).
-    """
+    """Envia a mensagem para cada contato, com pausa aleatória entre um e outro."""
     sucessos = 0
     falhas = 0
     total = len(contatos)
