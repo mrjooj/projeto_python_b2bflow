@@ -24,14 +24,31 @@ class ZApiClient:
             "Client-Token": client_token,
         }
 
-    def enviar_texto(self, telefone: str, mensagem: str) -> dict:
+    def enviar_texto(
+        self,
+        telefone: str,
+        mensagem: str,
+        delay_typing: int | None = None,
+        delay_message: int | None = None,
+    ) -> dict:
         """
         Envia uma mensagem de texto simples para o telefone informado.
+
+        delay_typing: segundos (1-15) que o WhatsApp mostra "digitando..." antes da
+            mensagem chegar. Deixa o envio mais parecido com uma pessoa real digitando.
+        delay_message: segundos (1-15) de espera antes da mensagem ser efetivamente
+            entregue. Ambos são parâmetros nativos da Z-API.
+
         Retorna o payload de resposta da Z-API (contém zaapId e messageId).
         Lança ZApiError em caso de falha de rede ou resposta de erro.
         """
         telefone_normalizado = self._normalizar_telefone(telefone)
         payload = {"phone": telefone_normalizado, "message": mensagem}
+
+        if delay_typing is not None:
+            payload["delayTyping"] = delay_typing
+        if delay_message is not None:
+            payload["delayMessage"] = delay_message
 
         try:
             response = requests.post(

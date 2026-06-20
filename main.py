@@ -11,9 +11,11 @@ Uso:
     python main.py
 """
 import logging
+import random
 import sys
+import time
 
-from config import ConfigError, load_settings
+from config import ConfigError, Settings, load_settings
 from supabase_repository import Contato, ContatoRepository
 from zapi_client import ZApiClient, ZApiError
 
@@ -31,25 +33,48 @@ def montar_mensagem(contato: Contato) -> str:
     return MENSAGEM_TEMPLATE.format(nome_contato=contato.nome)
 
 
-def enviar_para_contatos(zapi: ZApiClient, contatos: list[Contato]) -> tuple[int, int]:
-    """Envia a mensagem para cada contato. Retorna (sucessos, falhas)."""
+def enviar_para_contatos(
+    zapi: ZApiClient,
+    contatos: list[Contato],
+    settings: Settings,
+) -> tuple[int, int]:
+    """
+    Envia a mensagem para cada contato, com um intervalo aleatório entre os envios
+    (para não parecer um disparo em massa) e delays nativos da Z-API que simulam
+    alguém digitando antes de cada mensagem.
+
+    Retorna (sucessos, falhas).
+    """
     sucessos = 0
     falhas = 0
+    total = len(contatos)
 
-    for contato in contatos:
+    for indice, contato in enumerate(contatos):
+        if indice > 0:
+            espera = random.uniform(
+                settings.intervalo_min_segundos, settings.intervalo_max_segundos
+            )
+            logger.info("Aguardando %.1fs antes do próximo envio...", espera)
+            time.sleep(espera)
+
         mensagem = montar_mensagem(contato)
         try:
-            resultado = zapi.enviar_texto(contato.telefone, mensagem)
+            resultado = zapi.enviar_texto(
+                contato.telefone,
+                mensagem,
+                delay_typing=settings.zapi_delay_typing,
+                delay_message=settings.zapi_delay_message,
+            )
             message_id = resultado.get("messageId", "desconhecido")
             logger.info(
-                "✅ Mensagem enviada para %s (telefone=%s) | messageId=%s",
-                contato.nome, contato.telefone, message_id,
+                "✅ [%d/%d] Mensagem enviada para %s (telefone=%s) | messageId=%s",
+                indice + 1, total, contato.nome, contato.telefone, message_id,
             )
             sucessos += 1
         except ZApiError as exc:
             logger.error(
-                "❌ Falha ao enviar para %s (telefone=%s): %s",
-                contato.nome, contato.telefone, exc,
+                "❌ [%d/%d] Falha ao enviar para %s (telefone=%s): %s",
+                indice + 1, total, contato.nome, contato.telefone, exc,
             )
             falhas += 1
 
@@ -89,7 +114,7 @@ def main() -> int:
         return 0
 
     logger.info("Iniciando envio para %d contato(s)...", len(contatos))
-    sucessos, falhas = enviar_para_contatos(zapi, contatos)
+    sucessos, falhas = enviar_para_contatos(zapi, contatos, settings)
 
     logger.info("Concluído. Sucessos: %d | Falhas: %d", sucessos, falhas)
     return 0 if falhas == 0 else 1

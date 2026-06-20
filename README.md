@@ -67,12 +67,25 @@ SUPABASE_TABLE=contatos
 ZAPI_INSTANCE_ID=sua_instance_id
 ZAPI_TOKEN=seu_token
 ZAPI_CLIENT_TOKEN=seu_client_token_de_seguranca
+ZAPI_DELAY_TYPING=3
+ZAPI_DELAY_MESSAGE=2
 
 # Geral
 MAX_CONTATOS=3
+INTERVALO_MIN_SEGUNDOS=3
+INTERVALO_MAX_SEGUNDOS=8
 ```
 
 > O arquivo `.env` **não** é versionado (veja `.gitignore`).
+
+### Envio humanizado
+
+Para não disparar as 3 mensagens em menos de 1 segundo (padrão clássico de bot/spam), o script:
+
+- Espera um intervalo **aleatório** entre `INTERVALO_MIN_SEGUNDOS` e `INTERVALO_MAX_SEGUNDOS` antes de enviar para o próximo contato.
+- Usa os parâmetros nativos da Z-API `delayTyping` (mostra "digitando..." no WhatsApp por `ZAPI_DELAY_TYPING` segundos antes da mensagem chegar) e `delayMessage` (espera `ZAPI_DELAY_MESSAGE` segundos antes de entregar).
+
+Ambos os pares de variáveis aceitam apenas valores de **1 a 15** (limite da própria Z-API) para os `ZAPI_DELAY_*`, e qualquer valor não-negativo para os `INTERVALO_*`.
 
 ## 4. Como rodar
 
@@ -96,10 +109,12 @@ python main.py
 2026-06-19 21:00:00 [INFO] Buscando até 3 contato(s) na tabela 'contatos'...
 2026-06-19 21:00:00 [INFO] 3 contato(s) válido(s) encontrado(s).
 2026-06-19 21:00:00 [INFO] Iniciando envio para 3 contato(s)...
-2026-06-19 21:00:01 [INFO] ✅ Mensagem enviada para Maria (telefone=5511999999999) | messageId=ABC123
-2026-06-19 21:00:01 [INFO] ✅ Mensagem enviada para João (telefone=5521988888888) | messageId=DEF456
-2026-06-19 21:00:02 [INFO] ✅ Mensagem enviada para Ana (telefone=5531977777777) | messageId=GHI789
-2026-06-19 21:00:02 [INFO] Concluído. Sucessos: 3 | Falhas: 0
+2026-06-19 21:00:01 [INFO] ✅ [1/3] Mensagem enviada para Maria (telefone=5511999999999) | messageId=ABC123
+2026-06-19 21:00:01 [INFO] Aguardando 5.2s antes do próximo envio...
+2026-06-19 21:00:06 [INFO] ✅ [2/3] Mensagem enviada para João (telefone=5521988888888) | messageId=DEF456
+2026-06-19 21:00:06 [INFO] Aguardando 3.8s antes do próximo envio...
+2026-06-19 21:00:10 [INFO] ✅ [3/3] Mensagem enviada para Ana (telefone=5531977777777) | messageId=GHI789
+2026-06-19 21:00:10 [INFO] Concluído. Sucessos: 3 | Falhas: 0
 ```
 
 ## Tratamento de erros
