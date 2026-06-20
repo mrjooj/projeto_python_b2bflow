@@ -1,4 +1,4 @@
-"""Busca os contatos cadastrados na tabela do Supabase."""
+
 import logging
 from dataclasses import dataclass
 

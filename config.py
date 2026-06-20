@@ -1,7 +1,6 @@
-"""Leitura e validação das variáveis de ambiente do projeto."""
+
 import os
 from dataclasses import dataclass
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -39,7 +38,7 @@ class Settings:
 
 
 def _get_int_in_range(key: str, default: int, minimo: int, maximo: int) -> int:
-    """Lê uma variável inteira opcional, validando o range aceito."""
+
     raw = os.getenv(key, str(default))
     try:
         valor = int(raw)
@@ -52,7 +51,7 @@ def _get_int_in_range(key: str, default: int, minimo: int, maximo: int) -> int:
 
 
 def load_settings() -> Settings:
-    """Monta as configurações a partir do .env. Lança ConfigError se algo estiver errado."""
+
     max_contatos_raw = os.getenv("MAX_CONTATOS", "3")
     try:
         max_contatos = int(max_contatos_raw)
@@ -64,7 +63,6 @@ def load_settings() -> Settings:
     if max_contatos < 1:
         raise ConfigError("MAX_CONTATOS deve ser maior ou igual a 1.")
 
-    # A Z-API aceita de 1 a 15 segundos para delayTyping/delayMessage.
     zapi_delay_typing = _get_int_in_range("ZAPI_DELAY_TYPING", default=3, minimo=1, maximo=15)
     zapi_delay_message = _get_int_in_range("ZAPI_DELAY_MESSAGE", default=2, minimo=1, maximo=15)
 

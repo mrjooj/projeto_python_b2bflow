@@ -1,9 +1,4 @@
-"""
-Lê os contatos do Supabase e envia, via Z-API, a mensagem:
-"Olá, <nome_contato> tudo bem com você?"
 
-Uso: python main.py
-"""
 import logging
 import random
 import sys

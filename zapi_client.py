@@ -1,7 +1,4 @@
-"""
-Cliente HTTP para a Z-API (envio de mensagens de WhatsApp).
-Documentação: https://developer.z-api.io/en/message/send-message-text
-"""
+
 import logging
 import re
 
@@ -31,13 +28,7 @@ class ZApiClient:
         delay_typing: int | None = None,
         delay_message: int | None = None,
     ) -> dict:
-        """
-        Envia uma mensagem de texto para o telefone informado.
-
-        delay_typing/delay_message (1-15s) são parâmetros nativos da Z-API: o primeiro
-        mostra "digitando..." no WhatsApp antes da mensagem chegar, o segundo atrasa
-        a entrega. Retorna o JSON de resposta (zaapId, messageId) ou lança ZApiError.
-        """
+   
         telefone_normalizado = self._normalizar_telefone(telefone)
         payload = {"phone": telefone_normalizado, "message": mensagem}
 
@@ -66,7 +57,7 @@ class ZApiClient:
 
     @staticmethod
     def _normalizar_telefone(telefone: str) -> str:
-        """Remove qualquer caractere que não seja dígito (espaços, +, -, parênteses)."""
+
         apenas_digitos = re.sub(r"\D", "", telefone)
         if not apenas_digitos:
             raise ZApiError(f"Telefone inválido: '{telefone}'")
